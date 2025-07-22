@@ -1,13 +1,1 @@
-{
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs@18.x"
-    }
-  },
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/api"
-    }
-  ]
-}
+{ "version": 2, "rewrites": [{ "source": "/(.*)", "destination": "/api" }] }
