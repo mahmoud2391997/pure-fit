@@ -1,162 +1,161 @@
 const Profile = require("./user.model");
 const Calendar = require("./calendar.model");
 const Favorites = require("./favorites.model");
-
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
-require("dotenv").config();
-const crypto = require("crypto");
+const jwt = require("jsonwebtoken")
+const bcrypt = require("bcryptjs") // Changed from 'bcrypt' to 'bcryptjs'
+require("dotenv").config()
+const crypto = require("crypto")
 
 // AES-256-CBC algorithm requires a 32-byte key and a 16-byte IV
-const algorithm = "aes-256-cbc";
+const algorithm = "aes-256-cbc"
 
 // Generate a random 4-digit verification code
 function generateVerificationCode() {
-  return Math.floor(1000 + Math.random() * 9000).toString(); // Generates a 4-digit number
+  return Math.floor(1000 + Math.random() * 9000).toString() // Generates a 4-digit number
 }
 
-const key = crypto.randomBytes(32); // 32 bytes = 256 bits (AES-256)
-const iv = crypto.randomBytes(16); // 16 bytes = 128 bits (AES block size)
+const key = crypto.randomBytes(32) // 32 bytes = 256 bits (AES-256)
+const iv = crypto.randomBytes(16) // 16 bytes = 128 bits (AES block size)
 // Encrypt the verification code
 function encryptVerificationCode(code, key, iv) {
-  const cipher = crypto.createCipheriv(algorithm, key, iv);
-  let encrypted = cipher.update(code, "utf8", "hex");
-  encrypted += cipher.final("hex");
-  return encrypted;
+  const cipher = crypto.createCipheriv(algorithm, key, iv)
+  let encrypted = cipher.update(code, "utf8", "hex")
+  encrypted += cipher.final("hex")
+  return encrypted
 }
 
 // Decrypt the encrypted verification code
 function decryptVerificationCode(encryptedCode, key, iv) {
-  const decipher = crypto.createDecipheriv(algorithm, key, iv);
-  let decrypted = decipher.update(encryptedCode, "hex", "utf8");
-  decrypted += decipher.final("utf8");
-  return decrypted;
+  const decipher = crypto.createDecipheriv(algorithm, key, iv)
+  let decrypted = decipher.update(encryptedCode, "hex", "utf8")
+  decrypted += decipher.final("utf8")
+  return decrypted
 }
 
 // Step 1: Generate a 4-digit verification code
 
-const nodeMailer = require("nodemailer");
+const nodeMailer = require("nodemailer")
 
-let transporter = nodeMailer.createTransport({
+// Use environment variables for Nodemailer credentials
+const transporter = nodeMailer.createTransport({
   service: "gmail",
   auth: {
-    user: "mahmoudmelsaid1@gmail.com",
-    pass: "weiy uoqh zpln zeld",
+    user: process.env.NODEMAILER_EMAIL,
+    pass: process.env.NODEMAILER_APP_PASSWORD,
   },
-});
+})
 
 const sendVerificationCodeEmail = (email, code) => {
   transporter.sendMail({
-    from: "Pure-Fit<mahmoudmelsaid1@gmail.com>",
+    from: "Pure-Fit<mahmoudmelsaid1@gmail.com>", // Consider making this dynamic or an env var too
     to: email,
     subject: "Reset Password Verification Code",
     text: `Your verification code is: ${code}`,
-  });
-};
+  })
+}
 
-
-const secretKey = process.env.SECRET_KEY;
+const secretKey = process.env.SECRET_KEY
 function getToken(email) {
   const user = {
     email: email,
     role: "user",
-  };
-  const token = jwt.sign({ user }, secretKey, { expiresIn: "168h" });
-  console.log(token);
-  return token;
+  }
+  const token = jwt.sign({ user }, secretKey, { expiresIn: "168h" })
+  console.log(token)
+  return token
 }
 async function hashPassword(password) {
   const hashedPassword = await new Promise((resolve, reject) => {
-    bcrypt.hash(password, 10, function (err, hash) {
-      if (err) reject(err);
-      resolve(hash);
-    });
-  });
+    bcrypt.hash(password, 10, (err, hash) => {
+      if (err) reject(err)
+      resolve(hash)
+    })
+  })
 
-  return hashedPassword;
+  return hashedPassword
 }
 const createProfile = async (req, res) => {
-  const profile = req.body;
+  const profile = req.body
 
   try {
-   const existProfile = await Profile.findOne({ userEmail: profile.userEmail });
+    const existProfile = await Profile.findOne({ userEmail: profile.userEmail })
     if (existProfile) {
-      res.status(409).json({message:"Email Already In Use"});
+      res.status(409).json({ message: "Email Already In Use" })
     } else {
-     let newProfile =  await Profile.create({
+      const newProfile = await Profile.create({
         ...profile,
         password: await hashPassword(profile.password),
-      });
-      await  Calendar.create({
-  profileId:newProfile._id,  // Pass the profile ID
-  // Weeks and other data will be automatically filled with defaults
-});
-         await  Favorites.create({
-  profileId:newProfile._id,  // Pass the profile ID
-  // Weeks and other data will be automatically filled with defaults
-});
+      })
+      await Calendar.create({
+        profileId: newProfile._id, // Pass the profile ID
+        // Weeks and other data will be automatically filled with defaults
+      })
+      await Favorites.create({
+        profileId: newProfile._id, // Pass the profile ID
+        // Weeks and other data will be automatically filled with defaults
+      })
       res.json({
         success: true,
         message: "Registeration successful",
         token: getToken(profile.userEmail),
-      });
+      })
     }
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error(err)
+    res.status(500).json({ error: "Internal Server Error" })
   }
-};
+}
 const checkAuthentication = async (req, res) => {
-  const email = req.body.email;
-  const password = req.body.password;
+  const email = req.body.email
+  const password = req.body.password
 
   try {
-    const emailCheck = await Profile.findOne({ userEmail: email });
+    const emailCheck = await Profile.findOne({ userEmail: email })
     if (emailCheck) {
-      console.log(emailCheck.password);
-      console.log(password);
+      console.log(emailCheck.password)
+      console.log(password)
 
       if (await bcrypt.compare(password, emailCheck.password)) {
         res.json({
           success: true,
           message: "Authentication successful",
           token: getToken(email),
-        });
+        })
       } else {
         res.status(401).json({
           success: false,
           message: "Invalid email or password",
-        });
+        })
       }
     } else {
       res.status(401).json({
         success: false,
         message: "Invalid email or password",
-      });
+      })
     }
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error(err)
+    res.status(500).json({ error: "Internal Server Error" })
   }
-};
+}
 
 const isCodeExpired = (expirationTime) => {
-  const currentTime = Date.now();
-  return currentTime > expirationTime;
-};
+  const currentTime = Date.now()
+  return currentTime > expirationTime
+}
 const sendVerificationCode = async (req, res) => {
-  console.log("reached");
+  console.log("reached")
 
-  const email = req.body.email;
-  let verificationCode = generateVerificationCode();
-  const codeCreationTime = Date.now();
-  const expirationTime = codeCreationTime + 10 * 60 * 1000;
+  const email = req.body.email
+  const verificationCode = generateVerificationCode()
+  const codeCreationTime = Date.now()
+  const expirationTime = codeCreationTime + 10 * 60 * 1000
 
-  console.log("reached");
-  sendVerificationCodeEmail(email, verificationCode);
+  console.log("reached")
+  sendVerificationCodeEmail(email, verificationCode)
 
   try {
-    let profile = await Profile.updateOne(
+    const profile = await Profile.updateOne(
       { userEmail: email },
       {
         $set: {
@@ -164,63 +163,60 @@ const sendVerificationCode = async (req, res) => {
           codeExpirationTime: expirationTime,
         },
       },
-      { upsert: false }
+      { upsert: false },
     )
       .then((result) => {
-        console.log("result");
+        console.log("result")
 
-        console.log(result); // Check the result
+        console.log(result) // Check the result
       })
       .catch((error) => {
-        console.error("Error:", error);
-      });
-    res.json("Verification Code Send");
+        console.error("Error:", error)
+      })
+    res.json("Verification Code Send")
   } catch (error) {
-    res.status(500).json("Internal Server Error");
+    res.status(500).json("Internal Server Error")
   }
-};
+}
 
 const verifyCode = async (req, res) => {
-  const email = req.body.email;
-  const verificationCode = req.body.verificationCode;
+  const email = req.body.email
+  const verificationCode = req.body.verificationCode
   console.log(verificationCode)
 
-  let profile = await Profile.findOne({ userEmail: email });
+  const profile = await Profile.findOne({ userEmail: email })
   console.log(profile)
-      console.log(decryptVerificationCode(profile.verificationCode, key, iv))
+  console.log(decryptVerificationCode(profile.verificationCode, key, iv))
 
-  if (
-    decryptVerificationCode(profile.verificationCode, key, iv) ===
-    verificationCode
-  ) {
+  if (decryptVerificationCode(profile.verificationCode, key, iv) === verificationCode) {
     if (!isCodeExpired(profile.codeExpirationTime)) {
-      res.json({ message: "The User Entered The Right Verification Code" });
+      res.json({ message: "The User Entered The Right Verification Code" })
     } else {
-      res.status(500).json("Verification Code Expired");
+      res.status(500).json("Verification Code Expired")
     }
   } else {
-    res.status(500).json("Incorrect Verification Code");
+    res.status(500).json("Incorrect Verification Code")
   }
-};
+}
 
 const resetPassword = async (req, res) => {
-  const email = req.body.email;
-  const newPassword = req.body.newPassword;
-  let profile = await Profile.updateOne(
+  const email = req.body.email
+  const newPassword = req.body.newPassword
+  const profile = await Profile.updateOne(
     { userEmail: email },
     {
       $set: {
         password: await hashPassword(newPassword),
       },
     },
-    { upsert: false }
-  );
+    { upsert: false },
+  )
   if (profile.acknowledged) {
-    res.json("Password Changed Successfully");
+    res.json("Password Changed Successfully")
   } else {
-    res.status(500).json("Internal server error");
+    res.status(500).json("Internal server error")
   }
-};
+}
 
 module.exports = {
   createProfile,
@@ -228,4 +224,4 @@ module.exports = {
   sendVerificationCode,
   verifyCode,
   resetPassword,
-};
+}
