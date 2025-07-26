@@ -1,70 +1,98 @@
-// Import required modules
-const express = require("express")
-const cors = require("cors")
-const mongoose = require("mongoose")
-const userRoute = require("../user.route")
-const exerciseRoute = require("../exercise.route")
-const profileRoute = require("../profile.route")
-const categoryRoute = require("../category.route")
-const favoritesRoute = require("../favorites.route")
-const foodRoute = require("../food.route")
-const drinksRoute = require("../drinks.route")
-const calenderRoute = require("../calendar.route")
-const { aiChat } = require("../gemini.controller")
+// server.js or index.js
 
-// Create an Express application
-const app = express()
+require("dotenv").config(); // Load .env variables
+const express = require("express");
+const cors = require("cors");
+const mongoose = require("mongoose");
 
-require("dotenv").config()
-const connectionString = process.env.DB_CONNECTION_STRING
+// Import routes
+const userRoute = require("../user.route");
+const exerciseRoute = require("../exercise.route");
+const profileRoute = require("../profile.route");
+const categoryRoute = require("../category.route");
+const favoritesRoute = require("../favorites.route");
+const foodRoute = require("../food.route");
+const drinksRoute = require("../drinks.route");
+const calendarRoute = require("../calendar.route");
+const { aiChat } = require("../gemini.controller");
 
-// Connect to MongoDB
-// Cache the connection to avoid reconnecting on every serverless function invocation
-let cachedDb = null
+// MongoDB connection string from .env
+const connectionString = process.env.DB_CONNECTION_STRING ;
 
+const app = express();
+
+// Middleware
+app.use(express.json());
+app.use(cors());
+
+let cachedDb = null;
+
+// Database connection function
 async function connectToDatabase() {
-  if (cachedDb) {
-    return cachedDb
+  if (cachedDb) return cachedDb;
+
+  try {
+    const client = await mongoose.connect(connectionString, {
+      dbName: "Fit-Pro",
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+
+    mongoose.connection.on("error", (err) => {
+      console.error("Mongoose connection error:", err);
+    });
+
+    mongoose.connection.once("open", () => {
+      console.log("MongoDB connection opened!");
+    });
+
+    cachedDb = client.connection.db;
+    console.log("Connected to MongoDB Atlas");
+    return cachedDb;
+  } catch (error) {
+    console.error("MongoDB connection failed:", error.message);
+    throw error;
   }
-  const client = await mongoose.connect(connectionString, { dbName: "Fit-Pro" })
-  cachedDb = client.connection.db
-  console.log("Connected to database!")
-  return cachedDb
 }
 
-app.use(express.json())
-app.use(cors()) // Apply CORS middleware globally
+// 🔁 Connect to DB on startup (optional but recommended)
+connectToDatabase().catch((err) => console.error("Startup DB connection failed:", err));
 
-// Routes
-app.use("/auth", userRoute)
-app.use("/api/exercises", exerciseRoute)
-app.use("/api/categories", categoryRoute)
-app.use("/api/foods", foodRoute)
-app.use("/api/drinks", drinksRoute)
-app.use("/api/calendar", calenderRoute)
-app.post("/api/gemini", aiChat)
-app.use("/api/profile", profileRoute)
-app.use("/api/favorites", favoritesRoute)
-
-app.get("/", (req, res) => {
-  res.send("Hello, World!")
-})
-
-// Middleware to ensure database connection for all API routes
+// Middleware to ensure DB is connected before handling requests
 app.use(async (req, res, next) => {
   try {
-    await connectToDatabase()
-    next()
+    await connectToDatabase();
+    console.log("connecting"); // You should now see this on every request
+    next();
   } catch (error) {
-    console.error("Database connection failed:", error)
-    res.status(500).json({ error: "Database connection failed" })
+    console.error("Database connection error on request:", error);
+    res.status(500).json({ error: "Database connection failed" });
   }
-})
+});
+
+// Routes
+app.use("/auth", userRoute);
+app.use("/api/exercises", exerciseRoute);
+app.use("/api/categories", categoryRoute);
+app.use("/api/foods", foodRoute);
+app.use("/api/drinks", drinksRoute);
+app.use("/api/calendar", calendarRoute);
+app.use("/api/profile", profileRoute);
+app.use("/api/favorites", favoritesRoute);
+app.post("/api/gemini", aiChat);
+
+// Base route
+app.get("/", (req, res) => {
+  res.send("Hello, World!");
+});
+
+// Start server
 if (require.main === module) {
-  const port = process.env.PORT || 3000 // Use PORT environment variable or default to 3000
+  const port = process.env.PORT || 3000;
   app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`)
-  })
+    console.log(`🚀 Server running at http://localhost:${port}`);
+  });
 }
-// Export the app as a serverless function handler
-module.exports = app
+
+// Export app for testing or serverless
+module.exports = app;
