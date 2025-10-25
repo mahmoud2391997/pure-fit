@@ -45,7 +45,7 @@ const aiChat = async (req, res) => {
     
     // The API error response (e.g., 400 Bad Request) is what was likely caught,
     // leading to the 500 status and generic message.
-    res.status(500).json("Internal server error when communicating with AI.",error.response ? error.response.data : error.message)
+    res.status(500).json("Internal server error when communicating with AI.",error)
   }
 }
 
