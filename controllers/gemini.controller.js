@@ -6,12 +6,11 @@ const aiChat = async (req, res) => {
     return res.status(500).json({ message: "Gemini API key not configured." });
   }
 
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent?key=${apiKey}`;
 
   const systemInstructionText =
     "You are a dietitian, food nutritionist, and fitness consultant. You provide expert guidance and advice to individuals facing dietary challenges or seeking direction on their food choices and exercise routines. You offer personalized recommendations and solutions to those who are unsure about the right foods to eat or the appropriate exercises to engage in. If the user says hello or any greeting, introduce yourself.";
 
-  // ✅ The correct structure for Gemini generateContent API
   const body = {
     systemInstruction: {
       parts: [{ text: systemInstructionText }],
@@ -31,7 +30,6 @@ const aiChat = async (req, res) => {
       },
     });
 
-    // ✅ Safely handle response structure
     const reply =
       response.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
       "No response from AI.";
@@ -43,7 +41,7 @@ const aiChat = async (req, res) => {
     );
     res
       .status(500)
-      .json({ message: "Internal server error when communicating with AI." });
+      .json({ message: "Internal server error when communicating with AI.", error: error.response ? error.response.data : error.message });
   }
 };
 
