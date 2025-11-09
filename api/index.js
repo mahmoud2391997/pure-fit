@@ -14,7 +14,7 @@ const favoritesRoute = require("../favorites.route");
 const foodRoute = require("../food.route");
 const drinksRoute = require("../drinks.route");
 const calendarRoute = require("../calendar.route");
-const { aiChat } = require("../gemini.controller");
+const { aiChat } = require("../controllers/gemini.controller");
 
 // MongoDB connection string from  .env
 const connectionString = process.env.DB_CONNECTION_STRING ;
