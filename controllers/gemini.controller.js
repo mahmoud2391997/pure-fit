@@ -21,6 +21,19 @@ const aiChat = async (req, res) => {
         parts: [{ text: req.body.message }],
       },
     ],
+    generationConfig: {
+      temperature: 0.7,
+      topK: 20,
+      topP: 0.1,
+      maxOutputTokens: 512,
+      stopSequences: ["I hope this helps"],
+    },
+    safetySettings: [
+      {
+        category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+        threshold: "BLOCK_LOW_AND_ABOVE",
+      },
+    ],
   };
 
   try {
