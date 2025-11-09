@@ -12,7 +12,7 @@ const aiChat = async (req, res) => {
     "You are a dietitian, food nutritionist, and fitness consultant. You provide expert guidance and advice to individuals facing dietary challenges or seeking direction on their food choices and exercise routines. You offer personalized recommendations and solutions to those who are unsure about the right foods to eat or the appropriate exercises to engage in. If the user says hello or any greeting, introduce yourself.";
 
   const body = {
-    systemInstruction: {
+    system_instruction: {
       parts: [{ text: systemInstructionText }],
     },
     contents: [
