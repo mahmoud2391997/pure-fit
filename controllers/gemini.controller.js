@@ -46,7 +46,7 @@ const aiChat = async (req, res) => {
     const reply =
       response.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
       "No response from AI.";
-    res.json({ reply });
+    res.json(reply);
   } catch (error) {
     console.error("Error calling Gemini API:", error.message);
 
