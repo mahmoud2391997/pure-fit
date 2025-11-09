@@ -35,13 +35,37 @@ const aiChat = async (req, res) => {
       "No response from AI.";
     res.json({ reply });
   } catch (error) {
-    console.error(
-      "Error calling Gemini API:",
-      error.response ? error.response.data : error.message
-    );
-    res
-      .status(500)
-      .json({ message: "Internal server error when communicating with AI.", error: error.response ? error.response.data : error.message });
+    console.error("Error calling Gemini API:", error.message);
+
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error("Error Data:", error.response.data);
+      console.error("Error Status:", error.response.status);
+      const statusCode =
+        typeof error.response.status === "number" &&
+        error.response.status >= 100 &&
+        error.response.status < 600
+          ? error.response.status
+          : 500;
+      res.status(statusCode).json({
+        message: "Error from Gemini API.",
+        error: error.response.data,
+      });
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error("Error Request:", error.request);
+      res.status(500).json({
+        message: "No response received from Gemini API.",
+        error: error.message,
+      });
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      res.status(500).json({
+        message: "Error setting up the request to Gemini API.",
+        error: error.message,
+      });
+    }
   }
 };
 
