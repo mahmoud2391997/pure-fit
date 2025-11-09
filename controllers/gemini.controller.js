@@ -6,13 +6,13 @@ const aiChat = async (req, res) => {
     return res.status(500).json({ message: "Gemini API key not configured." });
   }
 
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent?key=${apiKey}`;
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
 
   const systemInstructionText =
     "You are a dietitian, food nutritionist, and fitness consultant. You provide expert guidance and advice to individuals facing dietary challenges or seeking direction on their food choices and exercise routines. You offer personalized recommendations and solutions to those who are unsure about the right foods to eat or the appropriate exercises to engage in. If the user says hello or any greeting, introduce yourself.";
 
   const body = {
-    system_instruction: {
+    systemInstruction: {
       parts: [{ text: systemInstructionText }],
     },
     contents: [
@@ -21,14 +21,14 @@ const aiChat = async (req, res) => {
         parts: [{ text: req.body.message }],
       },
     ],
-    generation_config: {
+    generationConfig: {
       temperature: 0.7,
-      top_k: 20,
-      top_p: 0.1,
-      max_output_tokens: 512,
-      stop_sequences: ["I hope this helps"],
+      topK: 20,
+      topP: 0.1,
+      maxOutputTokens: 512,
+      stopSequences: ["I hope this helps"],
     },
-    safety_settings: [
+    safetySettings: [
       {
         category: "HARM_CATEGORY_DANGEROUS_CONTENT",
         threshold: "BLOCK_LOW_AND_ABOVE",
