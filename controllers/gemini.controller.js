@@ -21,14 +21,14 @@ const aiChat = async (req, res) => {
         parts: [{ text: req.body.message }],
       },
     ],
-    generationConfig: {
+    generation_config: {
       temperature: 0.7,
-      topK: 20,
-      topP: 0.1,
-      maxOutputTokens: 512,
-      stopSequences: ["I hope this helps"],
+      top_k: 20,
+      top_p: 0.1,
+      max_output_tokens: 512,
+      stop_sequences: ["I hope this helps"],
     },
-    safetySettings: [
+    safety_settings: [
       {
         category: "HARM_CATEGORY_DANGEROUS_CONTENT",
         threshold: "BLOCK_LOW_AND_ABOVE",
