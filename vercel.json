@@ -1,1 +1,14 @@
-{ "version": 2, "rewrites": [{ "source": "/(.*)", "destination": "/api" }] }
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/auth/(.*)", "destination": "/api" },
+    { "source": "/api/exercises/(.*)", "destination": "/api" },
+    { "source": "/api/categories/(.*)", "destination": "/api" },
+    { "source": "/api/foods/(.*)", "destination": "/api" },
+    { "source": "/api/drinks/(.*)", "destination": "/api" },
+    { "source": "/api/calendar/(.*)", "destination": "/api" },
+    { "source": "/api/profile/(.*)", "destination": "/api" },
+    { "source": "/api/favorites/(.*)", "destination": "/api" },
+    { "source": "/api/gemini", "destination": "/api" }
+  ]
+}

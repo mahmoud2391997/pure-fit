@@ -1,7 +1,7 @@
 const axios = require("axios");
 
 const aiChat = async (req, res) => {
-  const apiKey = process.env.GEMINI_API_KEY || "AIzaSyC-ulAWk2kjwwfJzJeFZXLFI6lYGvT3bVo";
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ message: "Gemini API key not configured." });
   }
@@ -13,7 +13,7 @@ const aiChat = async (req, res) => {
 
   // ✅ The correct structure for Gemini generateContent API
   const body = {
-    system_instruction: {
+    systemInstruction: {
       parts: [{ text: systemInstructionText }],
     },
     contents: [
