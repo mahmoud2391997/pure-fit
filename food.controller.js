@@ -1,48 +1,71 @@
 const Food = require("./food.model");
 const Mongoose = require("mongoose");
 
+// Get all foods
 const getFoods = async (req, res) => {
   try {
     const foods = await Food.find({});
     res.json(foods);
   } catch (error) {
-    res.status(500).json("internal server error");
-    return null;
+    console.error(error);
+    res.status(500).json("Internal server error");
   }
 };
-const addFood = async (req, res) => {
- const food = req.body
- console.log(food)
-  try {
-    const response = await Food.create({...food});
-     console.log(response)
 
+// Add new food
+const addFood = async (req, res) => {
+  const food = req.body;
+  try {
+    const response = await Food.create(food);
     res.json(response);
   } catch (error) {
-    res.status(500).json("internal server error");
-    return null;
+    console.error(error);
+    res.status(500).json("Internal server error");
   }
 };
-const editFood = async (req, res) => {
-    const Id = req.params.id;
 
- const food = req.body
+// Edit food by ID
+const editFood = async (req, res) => {
+  const id = req.params.id;
+  const food = req.body;
+
   try {
     const response = await Food.updateOne(
-      { _id: new Mongoose.Types.ObjectId(Id) },
+      { _id: new Mongoose.Types.ObjectId(id) },
       { $set: food },
       { upsert: false }
     );
-    console.log(res)
-    res.json(response);
-        return null;
 
+    res.json(response);
   } catch (error) {
-    res.status(500).json("internal server error");
-    return null;
+    console.error(error);
+    res.status(500).json("Internal server error");
+  }
+};
+
+// Delete food by ID
+const deleteFood = async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const response = await Food.deleteOne({
+      _id: new Mongoose.Types.ObjectId(id),
+    });
+
+    if (response.deletedCount === 0) {
+      return res.status(404).json({ message: "Food not found" });
+    }
+
+    res.json({ message: "Food deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json("Internal server error");
   }
 };
 
 module.exports = {
-  getFoods,addFood,editFood
+  getFoods,
+  addFood,
+  editFood,
+  deleteFood,
 };
